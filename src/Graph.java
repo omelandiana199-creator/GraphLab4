@@ -1,26 +1,37 @@
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
-public class Graph {
-    // Зберігання графу у вигляді списку суміжності
-    private final Map<Integer, List<Integer>> adjacencyList;
+
+// @param <T> тип даних, що представляє вершину графу.
+
+public class Graph<T> {
+
+    private final Map<T, List<T>> adjacencyList;
 
     public Graph() {
         this.adjacencyList = new HashMap<>();
     }
 
-    public void addEdge(int u, int v) {
-        adjacencyList.putIfAbsent(u, new ArrayList<>());
-        adjacencyList.putIfAbsent(v, new ArrayList<>());
-        adjacencyList.get(u).add(v);
-        adjacencyList.get(v).add(u);
+    /* Додає неорієнтоване ребро між двома вершинами
+     */
+    public void addEdge(T u, T v) {
+        adjacencyList.computeIfAbsent(u, k -> new ArrayList<>()).add(v);
+        adjacencyList.computeIfAbsent(v, k -> new ArrayList<>()).add(u);
     }
 
-     // Виявлення циклу в неорієнтованому графі за допомогою DFS
+    //Перевіряє наявність циклу в неорієнтованому графі.
     public boolean hasCycle() {
-        Set<Integer> visited = new HashSet<>();
-        for (int vertex : adjacencyList.keySet()) {
+        Set<T> visited = new HashSet<>();
+        for (T vertex : adjacencyList.keySet()) {
             if (!visited.contains(vertex)) {
-                if (hasCycleDFS(vertex, visited, -1)) {
+                if (hasCycleDFS(vertex, visited, null)) {
                     return true;
                 }
             }
@@ -28,37 +39,43 @@ public class Graph {
         return false;
     }
 
-    private boolean hasCycleDFS(int vertex, Set<Integer> visited, int parent) {
+    private boolean hasCycleDFS(T vertex, Set<T> visited, T parent) {
         visited.add(vertex);
-        for (int neighbor : adjacencyList.getOrDefault(vertex, Collections.emptyList())) {
+        for (T neighbor : adjacencyList.getOrDefault(vertex, Collections.emptyList())) {
             if (!visited.contains(neighbor)) {
                 if (hasCycleDFS(neighbor, visited, vertex)) {
                     return true;
                 }
-            } else if (neighbor != parent) {
-
+            } else if (!neighbor.equals(parent)) {
                 return true;
             }
         }
         return false;
     }
 
-    //Найкоротший шлях (BFS)
+    /**
+     * Знаходить найкоротший шлях між двома вершинами за допомогою BFS.
+     * Повертає пустий список, якщо шляху немає або вершини не існують.
+     */
+    public List<T> shortestPathBfs(T start, T target) {
+        //  якщо вершин немає в графі, немає сенсу запускати пошук
+        if (!adjacencyList.containsKey(start) || !adjacencyList.containsKey(target)) {
+            return Collections.emptyList();
+        }
 
-    public List<Integer> shortestPathBfs(int start, int target) {
-        Map<Integer, Integer> predecessors = new HashMap<>();
-        Queue<Integer> queue = new LinkedList<>();
-        Set<Integer> visited = new HashSet<>();
+        Map<T, T> predecessors = new HashMap<>();
+        Queue<T> queue = new LinkedList<>();
+        Set<T> visited = new HashSet<>();
 
         queue.add(start);
         visited.add(start);
 
         while (!queue.isEmpty()) {
-            int current = queue.poll();
-            if (current == target) {
+            T current = queue.poll();
+            if (current.equals(target)) {
                 return buildPath(predecessors, target);
             }
-            for (int neighbor : adjacencyList.getOrDefault(current, Collections.emptyList())) {
+            for (T neighbor : adjacencyList.getOrDefault(current, Collections.emptyList())) {
                 if (!visited.contains(neighbor)) {
                     visited.add(neighbor);
                     predecessors.put(neighbor, current);
@@ -69,9 +86,9 @@ public class Graph {
         return Collections.emptyList();
     }
 
-    private List<Integer> buildPath(Map<Integer, Integer> predecessors, int target) {
-        LinkedList<Integer> path = new LinkedList<>();
-        Integer step = target;
+    private List<T> buildPath(Map<T, T> predecessors, T target) {
+        LinkedList<T> path = new LinkedList<>();
+        T step = target;
         while (step != null) {
             path.addFirst(step);
             step = predecessors.get(step);
@@ -79,19 +96,23 @@ public class Graph {
         return path;
     }
 
-    // Відстані від стартової вершини (BFS-рівні)
-    public Map<Integer, Integer> bfsDistances(int startVertex) {
-        Map<Integer, Integer> distances = new HashMap<>();
-        Queue<Integer> queue = new LinkedList<>();
+    //Повертає мапу з найкоротшими відстанями від стартової вершини до всіх інших.
+    public Map<T, Integer> bfsDistances(T startVertex) {
+        if (!adjacencyList.containsKey(startVertex)) {
+            return Collections.emptyMap();
+        }
 
-        distances.put(startVertex, 0); // Відстань до самого себе = 0
+        Map<T, Integer> distances = new HashMap<>();
+        Queue<T> queue = new LinkedList<>();
+
+        distances.put(startVertex, 0);
         queue.add(startVertex);
 
         while (!queue.isEmpty()) {
-            int current = queue.poll();
+            T current = queue.poll();
             int currentDistance = distances.get(current);
 
-            for (int neighbor : adjacencyList.getOrDefault(current, Collections.emptyList())) {
+            for (T neighbor : adjacencyList.getOrDefault(current, Collections.emptyList())) {
                 if (!distances.containsKey(neighbor)) {
                     distances.put(neighbor, currentDistance + 1);
                     queue.add(neighbor);
@@ -101,55 +122,60 @@ public class Graph {
         return distances;
     }
 
-    // Один можливий шлях DFS
-    public List<Integer> dfsPath(int start, int target) {
-        List<Integer> path = new ArrayList<>();
-        Set<Integer> visited = new HashSet<>();
+    //Знаходить будь-який шлях між двома вершинами за допомогою DFS.
+    public List<T> dfsPath(T start, T target) {
+        if (!adjacencyList.containsKey(start) || !adjacencyList.containsKey(target)) {
+            return Collections.emptyList();
+        }
+
+        List<T> path = new ArrayList<>();
+        Set<T> visited = new HashSet<>();
         if (dfsPathRecursive(start, target, visited, path)) {
             return path;
         }
         return Collections.emptyList();
     }
 
-    private boolean dfsPathRecursive(int current, int target, Set<Integer> visited, List<Integer> path) {
+    private boolean dfsPathRecursive(T current, T target, Set<T> visited, List<T> path) {
         visited.add(current);
         path.add(current);
 
-        if (current == target) return true;
+        if (current.equals(target)) {
+            return true;
+        }
 
-        for (int neighbor : adjacencyList.getOrDefault(current, Collections.emptyList())) {
+        for (T neighbor : adjacencyList.getOrDefault(current, Collections.emptyList())) {
             if (!visited.contains(neighbor)) {
                 if (dfsPathRecursive(neighbor, target, visited, path)) {
                     return true;
                 }
             }
         }
-        // Якщо шлях зайшов у тупик, прибираємо вершину
         path.remove(path.size() - 1);
         return false;
     }
 
-    //Перевірка графу на двочастковість
+    //Перевіряє, чи є граф двочастковим (може бути розфарбований у 2 кольори).
     public boolean isBipartite() {
-        Map<Integer, Integer> colors = new HashMap<>();
+        Map<T, Integer> colors = new HashMap<>();
 
-        for (int startVertex : adjacencyList.keySet()) {
+        for (T startVertex : adjacencyList.keySet()) {
             if (!colors.containsKey(startVertex)) {
-                Queue<Integer> queue = new LinkedList<>();
+                Queue<T> queue = new LinkedList<>();
                 queue.add(startVertex);
-                colors.put(startVertex, 0); // 'Розфарбовуємо' у колір 0
+                colors.put(startVertex, 0);
 
                 while (!queue.isEmpty()) {
-                    int current = queue.poll();
+                    T current = queue.poll();
                     int currentColor = colors.get(current);
-                    int nextColor = 1 - currentColor; // Наступний колір буде 1
+                    int nextColor = 1 - currentColor;
 
-                    for (int neighbor : adjacencyList.getOrDefault(current, Collections.emptyList())) {
+                    for (T neighbor : adjacencyList.getOrDefault(current, Collections.emptyList())) {
                         if (!colors.containsKey(neighbor)) {
                             colors.put(neighbor, nextColor);
                             queue.add(neighbor);
                         } else if (colors.get(neighbor) == currentColor) {
-                            return false; // Знайдено сусідів однакового кольору
+                            return false;
                         }
                     }
                 }
