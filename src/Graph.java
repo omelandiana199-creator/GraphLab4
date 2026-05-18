@@ -1,3 +1,4 @@
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -5,12 +6,13 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 
-
-// @param <T> тип даних, що представляє вершину графу.
-
+/**
+ * @param <T> тип даних, що представляє вершину графу.
+ */
 public class Graph<T> {
 
     private final Map<T, List<T>> adjacencyList;
@@ -19,14 +21,29 @@ public class Graph<T> {
         this.adjacencyList = new HashMap<>();
     }
 
-    /* Додає неорієнтоване ребро між двома вершинами
+    /**
+     * Повертає список усіх вершин графу, щоб зовнішній код 
+     * міг читати вершини, але не міг випадково змінити внутрішній стан графу.
+     */
+    public Set<T> getVertices() {
+        return Collections.unmodifiableSet(adjacencyList.keySet());
+    }
+
+    /**
+     * Додає неорієнтоване ребро між двома вершинами.
      */
     public void addEdge(T u, T v) {
+        // Захист від NullPointerException
+        Objects.requireNonNull(u, "Вершина 'u' не може бути null");
+        Objects.requireNonNull(v, "Вершина 'v' не може бути null");
+
         adjacencyList.computeIfAbsent(u, k -> new ArrayList<>()).add(v);
         adjacencyList.computeIfAbsent(v, k -> new ArrayList<>()).add(u);
     }
 
-    //Перевіряє наявність циклу в неорієнтованому графі.
+    /**
+     * Перевіряє наявність циклу в неорієнтованому графі.
+     */
     public boolean hasCycle() {
         Set<T> visited = new HashSet<>();
         for (T vertex : adjacencyList.keySet()) {
@@ -58,13 +75,15 @@ public class Graph<T> {
      * Повертає пустий список, якщо шляху немає або вершини не існують.
      */
     public List<T> shortestPathBfs(T start, T target) {
-        //  якщо вершин немає в графі, немає сенсу запускати пошук
+        Objects.requireNonNull(start, "Початкова вершина не може бути null");
+        Objects.requireNonNull(target, "Цільова вершина не може бути null");
+
         if (!adjacencyList.containsKey(start) || !adjacencyList.containsKey(target)) {
             return Collections.emptyList();
         }
 
         Map<T, T> predecessors = new HashMap<>();
-        Queue<T> queue = new LinkedList<>();
+        Queue<T> queue = new ArrayDeque<>(); 
         Set<T> visited = new HashSet<>();
 
         queue.add(start);
@@ -87,7 +106,8 @@ public class Graph<T> {
     }
 
     private List<T> buildPath(Map<T, T> predecessors, T target) {
-        LinkedList<T> path = new LinkedList<>();
+
+        LinkedList<T> path = new LinkedList<>(); 
         T step = target;
         while (step != null) {
             path.addFirst(step);
@@ -96,15 +116,15 @@ public class Graph<T> {
         return path;
     }
 
-    //Повертає мапу з найкоротшими відстанями від стартової вершини до всіх інших.
     public Map<T, Integer> bfsDistances(T startVertex) {
+        Objects.requireNonNull(startVertex, "Стартова вершина не може бути null");
+
         if (!adjacencyList.containsKey(startVertex)) {
             return Collections.emptyMap();
         }
 
         Map<T, Integer> distances = new HashMap<>();
-        Queue<T> queue = new LinkedList<>();
-
+        Queue<T> queue = new ArrayDeque<>();
         distances.put(startVertex, 0);
         queue.add(startVertex);
 
@@ -122,8 +142,13 @@ public class Graph<T> {
         return distances;
     }
 
-    //Знаходить будь-який шлях між двома вершинами за допомогою DFS.
+    /**
+     * Знаходить будь-який шлях між двома вершинами за допомогою DFS.
+     */
     public List<T> dfsPath(T start, T target) {
+        Objects.requireNonNull(start, "Початкова вершина не може бути null");
+        Objects.requireNonNull(target, "Цільова вершина не може бути null");
+
         if (!adjacencyList.containsKey(start) || !adjacencyList.containsKey(target)) {
             return Collections.emptyList();
         }
@@ -155,13 +180,15 @@ public class Graph<T> {
         return false;
     }
 
-    //Перевіряє, чи є граф двочастковим (може бути розфарбований у 2 кольори).
+    /**
+     * Перевіряє, чи є граф двочастковим (може бути розфарбований у 2 кольори).
+     */
     public boolean isBipartite() {
         Map<T, Integer> colors = new HashMap<>();
 
         for (T startVertex : adjacencyList.keySet()) {
             if (!colors.containsKey(startVertex)) {
-                Queue<T> queue = new LinkedList<>();
+                Queue<T> queue = new ArrayDeque<>(); 
                 queue.add(startVertex);
                 colors.put(startVertex, 0);
 
