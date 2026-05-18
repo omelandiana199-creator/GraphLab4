@@ -21,7 +21,6 @@ class GraphTest {
 
     @Test
     void shouldNotDetectCycleInAcyclicGraph() {
-
         Graph<Integer> treeGraph = new Graph<>();
         treeGraph.addEdge(0, 1);
         treeGraph.addEdge(0, 2);
@@ -34,7 +33,6 @@ class GraphTest {
 
     @Test
     void shouldFindShortestPathAndCalculateDistancesCorrectly() {
-      
         Graph<Integer> city = new Graph<>();
         city.addEdge(0, 1);
         city.addEdge(0, 3);
@@ -63,7 +61,6 @@ class GraphTest {
 
     @Test
     void shouldFindValidDfsPath() {
-   
         Graph<Integer> city = new Graph<>();
         city.addEdge(0, 1);
         city.addEdge(1, 2);
@@ -78,7 +75,6 @@ class GraphTest {
 
     @Test
     void shouldCorrectlyIdentifyBipartiteGraphs() {
-
         Graph<Integer> bipartiteGraph = new Graph<>();
         bipartiteGraph.addEdge(0, 1);
         bipartiteGraph.addEdge(1, 2);
@@ -96,7 +92,6 @@ class GraphTest {
 
     @Test
     void shouldHandleEdgeCasesSafely() {
-        
         Graph<Integer> graph = new Graph<>();
         graph.addEdge(0, 1);
 
@@ -112,5 +107,32 @@ class GraphTest {
 
         Map<Integer, Integer> unknownDistances = graph.bfsDistances(99);
         assertTrue(unknownDistances.isEmpty(), "Відстані для неіснуючої вершини мають бути порожньою мапою");
+    }
+
+
+    @Test
+    void shouldReturnEmptyPathWhenNoConnectionExists() {
+        Graph<Integer> disconnectedGraph = new Graph<>();
+        disconnectedGraph.addEdge(0, 1);
+        disconnectedGraph.addEdge(2, 3); 
+        
+        List<Integer> path = disconnectedGraph.shortestPathBfs(0, 3);
+        assertTrue(path.isEmpty(), "Шлях між ізольованими компонентами має бути порожнім");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenArgsAreNull() {
+        Graph<String> graph = new Graph<>();
+
+        // Перевірка захисту від null в методi addEdge
+        assertThrows(NullPointerException.class, () -> graph.addEdge(null, "A"),
+                "Метод addEdge повинен викидати NullPointerException, якщо перший аргумент null");
+        
+        assertThrows(NullPointerException.class, () -> graph.addEdge("A", null),
+                "Метод addEdge повинен викидати NullPointerException, якщо другий аргумент null");
+
+        // Перевірка захисту від null в алгоритмах обходу
+        assertThrows(NullPointerException.class, () -> graph.shortestPathBfs(null, "A"));
+        assertThrows(NullPointerException.class, () -> graph.bfsDistances(null));
     }
 }
